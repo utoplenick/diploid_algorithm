@@ -38,7 +38,7 @@ class Species
   end
 
   def ==(sp)
-    @genome==sp.genome
+    @score==sp.score
   end
 
   def eql?(sp)
@@ -46,7 +46,7 @@ class Species
     self == sp
   end
   def hash
-    @genome.hash
+    @score.hash
   end
   def gray_to_dec(genome_part)
 
@@ -208,35 +208,39 @@ class Population
   end
 
   def crossover(parent)
+
     cross_pos = rand(parent[0].length-1)+1
-    child=Species.new()
+    child=Species.new
 
     for i in 0...cross_pos
       child.genome[0][i]=parent[0][i]
       child.genome[1][i]=parent[1][i]
     end
 
-    for i in cross_pos..(Species.length-1)
+    for i in cross_pos...(Species.length)
       child.genome[0][i]=parent[1][i]
       child.genome[1][i]=parent[0][i]
     end
 
     #puts "cross_pos = " + cross_pos.to_s
+
     return child.genome[rand(2)]
   end
 
   def inversion (patient)
-    a = 1
+    a = 0.1
     b = rand(0)
     if (a < b) then
       return patient
     end
     inv_pos = rand(Species.length)
-    return patient = patient[inv_pos..Species.length] + patient[0..(inv_pos-1)]
+    troll = Array.new
+    troll = patient[inv_pos...Species.length] + patient[0...inv_pos]
+    return troll
   end
 
   def mutation (patient)
-    a=1
+    a=0.2
 
     b=rand(0)
 
@@ -253,8 +257,6 @@ class Population
     end
 
     patient[mut_pos] = mutated
-    
-
     return patient
   end
 
@@ -264,10 +266,14 @@ class Population
     @genomes.each do |g|
       sum+=g.potency
       if (sum >= p) then
-        return g.genome
+        troll = Array.new(g.genome)
+        return troll
+        #return g.genome
       end
     end
-    return @genomes[0].genome
+    troll = Array.new(@genomes[0].genome)
+    troll
+    #return @genomes[0].genome
   end
 
   def choose_loser_index
@@ -289,10 +295,11 @@ class Population
     zygote_b = self.inversion(self.mutation(self.crossover(self.choose_parent_genome)))
     zygote_a = self.inversion(self.mutation(self.crossover(self.choose_parent_genome)))
     self.genomes.delete_at(self.choose_loser_index)
-    self.genomes.push(Species.new)
-    self.genomes[-1].genome[0] = zygote_a
-    self.genomes[-1].genome[1] = zygote_b
-    self.genomes[-1].calc_score
+    child = Species.new
+    child.genome[0] = zygote_a
+    child.genome[1] = zygote_b
+    child.calc_score
+    self.genomes.push(child)
     self.delete_duplicates
     #self.sort
     #self.calc_potency
@@ -300,6 +307,7 @@ class Population
 
   def delete_duplicates
     self.genomes.uniq!
+    #puts @number-self.genomes.size
     (@number-self.genomes.size).times do
       self.genomes.push(Species.new)
     end
@@ -335,21 +343,24 @@ end
 #puts ["r", "d", "R", "D"].inspect
 #puts family.mutation(["r", "d", "R", "D"]).inspect
 
-gena = Population.new(10, 50, 5)
-gena.show
+a = [1,2,3,4]
+puts a =  a[2..4] + a[0...2]
+
+gena = Population.new(200, 50, 5)
+#gena.show
 a=Array.new(3) { [] }
 puts a.inspect
 gena.genomes.each do |i|
   puts i.inspect
 end
-3000.times do |t|
+5000.times do |t|
   gena.calculate
   if (t%100==0) then
     a[0].push(gena.genomes[0].score)
     a[1].push(gena.sum_score/gena.number)
     a[2].push(t)
     puts t
-    gena.show
+    #gena.show
     gena.genomes.each do |i|
       puts i.inspect
     end
